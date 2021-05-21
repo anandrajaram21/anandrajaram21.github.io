@@ -11,4 +11,4 @@ Fast forward to April, 2021, when I started to explore the world of cybersecurit
 
 This blog will contain writeups to CTF challenges that I was able to solve, or ones that I found particularly interesting. These will explain everything from a beginners perspective, so as to make it easy to understand for everyone who has a background in tech.
 
-PS: If you stumble upon this website, feel free to take a look at my [GitHub profile](https://githb.com/anandrajaram21) or even toss me an email :)
+PS: If you stumble upon this website, feel free to take a look at my [GitHub profile](https://github.com/anandrajaram21) or even toss me an email :)
