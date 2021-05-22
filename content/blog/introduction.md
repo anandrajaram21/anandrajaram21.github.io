@@ -3,7 +3,7 @@ title: Introduction
 date: 2021-05-19T13:49:14+00:00
 ---
 
-First off, whoami? Well, I am Anand Rajaram. I am a student of Class 12 studying in Bangalore, India. I started programming at the age of 14, and have loved it ever since. The first language i ever learnt was Java, after which my focus shifted primarily to Python and JavaScript.  
+First off, whoami? Well, I am Anand Rajaram. I am a student of Class 12 studying in Bangalore, India. I started programming at the age of 14, and have loved it ever since. The first language I ever learnt was Java, after which my focus shifted primarily to Python and JavaScript.  
 
 My first introduction to computer science was surprisingly through a prank on Facebook. This was when I was 13 years old. It was a post that said "Run the following command in your macOS terminal to hack anyone's Facebook password `sudo rm -rf /`". I ran this on my dad's Mac, and there began my journey into computer science. Luckily my dad had a Time Machine backup, so everything was back to normal. I eventually started to explore what that command actually did, and got into learning Linux. After that, I just continued to learn whatever excited me the most then. 
 
