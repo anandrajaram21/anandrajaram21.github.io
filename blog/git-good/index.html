@@ -1,6 +1,101 @@
-<!doctype html><html lang=en-us><head><title>Git Good | Anand Rajaram | Blog</title><meta charset=utf-8><meta name=language content="en"><meta name=description content><meta name=keywords content><meta name=viewport content="width=device-width,initial-scale=1"><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><link rel="shortcut icon" type=image/png href=/favicon.ico><link type=text/css rel=stylesheet href=/css/post.min.86d1effd4c412b85ac13db53a90c473a0f256f789b821e131125c9aa25cb6a6d.css integrity="sha256-htHv/UxBK4WsE9tTqQxHOg8lb3ibgh4TESXJqiXLam0="><link type=text/css rel=stylesheet href=/css/custom.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css integrity="sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU="><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/anandrajaram21.github.io\/"},"articleSection":"blog","name":"Git Good","headline":"Git Good","description":"","inLanguage":"en-US","author":"","creator":"","publisher":"","accountablePerson":"","copyrightHolder":"","copyrightYear":"2021","datePublished":"2021-05-20 22:49:23 \u002b0530 \u002b0530","dateModified":"2021-05-20 22:49:23 \u002b0530 \u002b0530","url":"https:\/\/anandrajaram21.github.io\/blog\/git-good\/","wordCount":"583","keywords":["Blog"]}</script></head><body><div class=burger__container><div class=burger aria-controls=navigation aria-label=Menu><div class="burger__meat burger__meat--1"></div><div class="burger__meat burger__meat--2"></div><div class="burger__meat burger__meat--3"></div></div></div><nav class=nav id=navigation><ul class=nav__list><li><a href=/>about</a></li><li><a class=active href=/blog>blog</a></li></ul></nav><main><div class=flex-wrapper><div class=post__container><div class=post><header class=post__header><h1 id=post__title>Git Good</h1><time datetime="2021-05-20 22:49:23 +0530 +0530" class=post__date>May 20 2021</time></header><article class=post__content><h2 id=problem-statement>Problem Statement<a class=anchor href=#problem-statement>#</a></h2><p><img src=/pictures/git-good/challenge.png alt="challenge picture"></p><h2 id=tldr>TLDR<a class=anchor href=#tldr>#</a></h2><p>The name of the challenge is Git Good, so there must be something related to git. If we were to be able to access the <code>.git</code> folder for that website, we could maybe gain access to the website source code, and maybe even the flag. ON digging some more, we find <code>/.git/COMMIT_EDITMSG</code> and <code>/admin.html</code>. We can use <a href=https://github.com/internetwache/GitTools target=_blank rel="noreferrer noopener">GitTools</a>
-to dump and extract files from the remote <code>.git</code> folder. On navigating the file structure, we find a <code>users.db</code> SQLite database file, which contains emails and their password hashes. After cracking the password hashes, we can login with the email and password on the <code>/admin.html</code> page, which gives us the flag.</p><h2 id=scanning>Scanning<a class=anchor href=#scanning>#</a></h2><p>We should probably check out <code>robots.txt</code> for this website.</p><p><img src=/pictures/git-good/robots.png alt=robots></p><p><code>/admin.html</code> and <code>/.git/</code> look very interesting. Going to <code>/admin.html</code> takes us to a login page, which asks us for an email and a password. We have no clue about either of them, so lets keep looking.</p><p>We can run a basic nmap scan on the host (output can be found in <code>nmap/initial</code>). On examining the results, we find some interesting stuff.</p><p><img src=/pictures/git-good/nmapscan.png alt="nmap scan"></p><p>The nmap scan reveals the <code>.git</code> directory and the <code>COMMIT_EDITMSG</code> file. On navigating to <code>/.git/COMMIT_EDITMSG</code>, it starts to download the file on our local computer. This means that we can access the files of the <code>.git</code> folder.</p><h2 id=exploitation>Exploitation<a class=anchor href=#exploitation>#</a></h2><p>On examining the <code>COMMIT_EDITMSG</code> file, we find a potential email address for the <code>/admin.html</code>page, <code>aaron@cgau.sdc.tf</code>. We also find a bunch of filenames, but the one that looks the most interesting is <code>users.db</code>. But we cannot access the <code>users.db</code> file just by navigating to <code>/users.db</code>, as it said forbidden. Our main aim is to somehow get the files from the <code>.git</code> folder. In the <code>.git</code> folder, objects are stored as blobs, so its not going to be easy to read them.</p><p>I personally spent some time trying to manually enumerate the <code>.git</code> folder and wasn&rsquo;t getting anywhere. I then came across <a href=https://github.com/internetwache/GitTools target=_blank rel="noreferrer noopener">this github repository</a>
-. This made everything so much simpler. By using the <code>Dumper</code> tool, we can download all possible files from that remote <code>.git</code> folder. After that, we have a local copy of all those files in the <code>.git</code> folder. But its the same problem again, we can not do anything with those blobs. Thats where the <code>Extractor</code> tool from the GitTools repo comes in. It tries to extract files and commits from a broken git repository. Perfect!</p><p>We can use the <code>Extractor</code> tool to get a copy of the files in the <code>.git</code> folder. On navigating the files in our file explorer, we can finally get our hands on the <code>users.db</code> that we wanted all along. From the source code of the web app, we find that the database is an SQLite database. So we can use an online SQLite database viewer to view the <code>users.db</code>, and sure enough, there are emails and password hashes. Nice and easy.</p><p><img src=/pictures/git-good/db.png alt=database></p><p>The hash can be cracked easily with an online hash cracker like <a href=https://crackstation.net>https://crackstation.net</a>. On cracking the hash, we get the password of the <code>aaron@cgau.sdc.tf</code> email as <code>weakpassword</code>. Challenge solved.</p><p><img src=/pictures/git-good/hash.png alt=hash></p><p>Now we just go to <code>/admin.html</code> and login with the email as <code>aaron@cgau.sdc.tf</code> and password as <code>weakpassword</code> to get the flag.</p><p><img src=/pictures/git-good/flag.png alt=flag></p><h2 id=thoughts>Thoughts<a class=anchor href=#thoughts>#</a></h2><p>The challenge was overall, a fairly easy challenge. The CTF classified it as medium challenge, but it had more solves than all the easy web challenges. I had a lot of fun solving this challenge, and learned enumerating remote <code>.git</code> folders to gain access to interesting files. A great challenge overall!</p></article><div class=pagination><a class=pagination__item href=https://anandrajaram21.github.io/blog/introduction/><span class=pagination__label>Previous Post</span>
-<span class=pagination__title>Introduction</span></a>
-<a class=pagination__item href=https://anandrajaram21.github.io/blog/apollo-1337/><span class=pagination__label>Next Post</span>
-<span class=pagination__title>Apollo 1337</span></a></div><footer class=post__footer><div class=social-icons><a class=social-icons__link rel=me title=GitHub href=https://github.com/anandrajaram21 target=_blank rel=noopener><div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/github.svg)></div></a><a class=social-icons__link rel=me title=LinkedIn href=https://linkedin.com/in/anandrajaram21 target=_blank rel=noopener><div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/linkedin.svg)></div></a><a class=social-icons__link rel=me title=Email href=mailto:anandrajaram21@gmail.com target=_blank rel=noopener><div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/email.svg)></div></a></div><p>© 2021</p></footer></div></div></div></main><script src=/js/index.min.575dda8d49ee02639942c63564273e6da972ab531dda26a08800bdcb477cbd7f.js integrity="sha256-V13ajUnuAmOZQsY1ZCc+balyq1Md2iagiAC9y0d8vX8=" crossorigin=anonymous></script><script src=https://unpkg.com/prismjs@1.20.0/components/prism-core.min.js></script><script src=https://unpkg.com/prismjs@1.20.0/plugins/autoloader/prism-autoloader.min.js data-autoloader-path=https://unpkg.com/prismjs@1.20.0/components/></script></body></html>
+<!doctype html><html lang=en-us>
+<head>
+<title>Git Good | Anand Rajaram | Blog</title>
+<meta charset=utf-8>
+<meta name=language content="en">
+<meta name=description content>
+<meta name=keywords content>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<link rel="shortcut icon" type=image/png href=/favicon.ico>
+<link type=text/css rel=stylesheet href=/css/post.min.86d1effd4c412b85ac13db53a90c473a0f256f789b821e131125c9aa25cb6a6d.css integrity="sha256-htHv/UxBK4WsE9tTqQxHOg8lb3ibgh4TESXJqiXLam0=">
+<link type=text/css rel=stylesheet href=/css/custom.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css integrity="sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=">
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/anandrajaram21.github.io\/"},"articleSection":"blog","name":"Git Good","headline":"Git Good","description":"","inLanguage":"en-US","author":"","creator":"","publisher":"","accountablePerson":"","copyrightHolder":"","copyrightYear":"2021","datePublished":"2021-05-20 22:49:23 \u002b0530 \u002b0530","dateModified":"2021-05-20 22:49:23 \u002b0530 \u002b0530","url":"https:\/\/anandrajaram21.github.io\/blog\/git-good\/","wordCount":"584","keywords":["Blog"]}</script>
+</head>
+<body>
+<div class=burger__container>
+<div class=burger aria-controls=navigation aria-label=Menu>
+<div class="burger__meat burger__meat--1"></div>
+<div class="burger__meat burger__meat--2"></div>
+<div class="burger__meat burger__meat--3"></div>
+</div>
+</div>
+<nav class=nav id=navigation>
+<ul class=nav__list>
+<li>
+<a href=/>about</a>
+</li>
+<li>
+<a class=active href=/blog>blog</a>
+</li>
+</ul>
+</nav>
+<main>
+<div class=flex-wrapper>
+<div class=post__container>
+<div class=post>
+<header class=post__header>
+<h1 id=post__title>Git Good</h1>
+<time datetime="2021-05-20 22:49:23 +0530 +0530" class=post__date>May 20 2021</time>
+</header>
+<article class=post__content>
+<h2 id=problem-statement>Problem Statement<a class=anchor href=#problem-statement>#</a></h2>
+<p><img src=/pictures/git-good/challenge.png alt="challenge picture"></p>
+<h2 id=tldr>TLDR<a class=anchor href=#tldr>#</a></h2>
+<p>The name of the challenge is Git Good, so there must be something related to git. If we were to be able to access the <code>.git</code> folder for that website, we could maybe gain access to the website source code, and maybe even the flag. ON digging some more, we find <code>/.git/COMMIT_EDITMSG</code> and <code>/admin.html</code>. We can use <a href=https://github.com/internetwache/GitTools target=_blank rel="noreferrer noopener">GitTools</a>
+to dump and extract files from the remote <code>.git</code> folder. On navigating the file structure, we find a <code>users.db</code> SQLite database file, which contains emails and their password hashes. After cracking the password hashes, we can login with the email and password on the <code>/admin.html</code> page, which gives us the flag.</p>
+<h2 id=scanning>Scanning<a class=anchor href=#scanning>#</a></h2>
+<p>We should probably check out <code>robots.txt</code> for this website.</p>
+<p><img src=/pictures/git-good/robots.png alt=robots></p>
+<p><code>/admin.html</code> and <code>/.git/</code> look very interesting. Going to <code>/admin.html</code> takes us to a login page, which asks us for an email and a password. We have no clue about either of them, so lets keep looking.</p>
+<p>We can run a basic nmap scan on the host (output can be found in <code>nmap/initial</code>). On examining the results, we find some interesting stuff.</p>
+<p><img src=/pictures/git-good/nmapscan.png alt="nmap scan"></p>
+<p>The nmap scan reveals the <code>.git</code> directory and the <code>COMMIT_EDITMSG</code> file. On navigating to <code>/.git/COMMIT_EDITMSG</code>, it starts to download the file on our local computer. This means that we can access the files of the <code>.git</code> folder.</p>
+<h2 id=exploitation>Exploitation<a class=anchor href=#exploitation>#</a></h2>
+<p>On examining the <code>COMMIT_EDITMSG</code> file, we find a potential email address for the <code>/admin.html</code>page, <code>aaron@cgau.sdc.tf</code>. We also find a bunch of filenames, but the one that looks the most interesting is <code>users.db</code>. But we cannot access the <code>users.db</code> file just by navigating to <code>/users.db</code>, as it said forbidden. Our main aim is to somehow get the files from the <code>.git</code> folder. In the <code>.git</code> folder, objects are stored as blobs, so its not going to be easy to read them.</p>
+<p>I personally spent some time trying to manually enumerate the <code>.git</code> folder and wasn&rsquo;t getting anywhere. I then came across <a href=https://github.com/internetwache/GitTools target=_blank rel="noreferrer noopener">this github repository</a>
+. This made everything so much simpler. By using the <code>Dumper</code> tool, we can download all possible files from that remote <code>.git</code> folder. After that, we have a local copy of all those files in the <code>.git</code> folder. But its the same problem again, we can not do anything with those blobs. Thats where the <code>Extractor</code> tool from the GitTools repo comes in. It tries to extract files and commits from a broken git repository. Perfect!</p>
+<p>We can use the <code>Extractor</code> tool to get a copy of the files in the <code>.git</code> folder. On navigating the files in our file explorer, we can finally get our hands on the <code>users.db</code> that we wanted all along. From the source code of the web app, we find that the database is an SQLite database. So we can use an online SQLite database viewer to view the <code>users.db</code>, and sure enough, there are emails and password hashes. Nice and easy.</p>
+<p><img src=/pictures/git-good/db.png alt=database></p>
+<p>The hash can be cracked easily with an online hash cracker like <a href=https://crackstation.net target=_blank rel="noreferrer noopener">https://crackstation.net</a>
+. On cracking the hash, we get the password of the <code>aaron@cgau.sdc.tf</code> email as <code>weakpassword</code>. Challenge solved.</p>
+<p><img src=/pictures/git-good/hash.png alt=hash></p>
+<p>Now we just go to <code>/admin.html</code> and login with the email as <code>aaron@cgau.sdc.tf</code> and password as <code>weakpassword</code> to get the flag.</p>
+<p><img src=/pictures/git-good/flag.png alt=flag></p>
+<h2 id=thoughts>Thoughts<a class=anchor href=#thoughts>#</a></h2>
+<p>The challenge was overall, a fairly easy challenge. The CTF classified it as medium challenge, but it had more solves than all the easy web challenges. I had a lot of fun solving this challenge, and learned enumerating remote <code>.git</code> folders to gain access to interesting files. A great challenge overall!</p>
+</article>
+<div class=pagination>
+<a class=pagination__item href=https://anandrajaram21.github.io/blog/introduction/>
+<span class=pagination__label>Previous Post</span>
+<span class=pagination__title>Introduction</span>
+</a>
+<a class=pagination__item href=https://anandrajaram21.github.io/blog/apollo-1337/>
+<span class=pagination__label>Next Post</span>
+<span class=pagination__title>Apollo 1337</span>
+</a>
+</div>
+<footer class=post__footer>
+<div class=social-icons>
+<a class=social-icons__link rel=me title=GitHub href=https://github.com/anandrajaram21 target=_blank rel=noopener>
+<div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/github.svg)></div>
+</a>
+<a class=social-icons__link rel=me title=LinkedIn href=https://linkedin.com/in/anandrajaram21 target=_blank rel=noopener>
+<div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/linkedin.svg)></div>
+</a>
+<a class=social-icons__link rel=me title=Email href=mailto:git@anandrajaram.dev target=_blank rel=noopener>
+<div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/email.svg)></div>
+</a>
+</div>
+<p>© 2021</p>
+</footer>
+</div>
+</div>
+</div>
+</main>
+<script src=/js/index.min.575dda8d49ee02639942c63564273e6da972ab531dda26a08800bdcb477cbd7f.js integrity="sha256-V13ajUnuAmOZQsY1ZCc+balyq1Md2iagiAC9y0d8vX8=" crossorigin=anonymous></script>
+<script src=https://unpkg.com/prismjs@1.20.0/components/prism-core.min.js></script>
+<script src=https://unpkg.com/prismjs@1.20.0/plugins/autoloader/prism-autoloader.min.js data-autoloader-path=https://unpkg.com/prismjs@1.20.0/components/></script>
+</body>
+</html>

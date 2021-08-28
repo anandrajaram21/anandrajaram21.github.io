@@ -1,6 +1,76 @@
-<!doctype html><html lang=en-us><head><title>Apollo 1337 | Anand Rajaram | Blog</title><meta charset=utf-8><meta name=language content="en"><meta name=description content><meta name=keywords content><meta name=viewport content="width=device-width,initial-scale=1"><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><link rel="shortcut icon" type=image/png href=/favicon.ico><link type=text/css rel=stylesheet href=/css/post.min.86d1effd4c412b85ac13db53a90c473a0f256f789b821e131125c9aa25cb6a6d.css integrity="sha256-htHv/UxBK4WsE9tTqQxHOg8lb3ibgh4TESXJqiXLam0="><link type=text/css rel=stylesheet href=/css/custom.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css integrity="sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU="><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/anandrajaram21.github.io\/"},"articleSection":"blog","name":"Apollo 1337","headline":"Apollo 1337","description":"","inLanguage":"en-US","author":"","creator":"","publisher":"","accountablePerson":"","copyrightHolder":"","copyrightYear":"2021","datePublished":"2021-05-20 23:04:11 \u002b0530 \u002b0530","dateModified":"2021-05-20 23:04:11 \u002b0530 \u002b0530","url":"https:\/\/anandrajaram21.github.io\/blog\/apollo-1337\/","wordCount":"628","keywords":["Blog"]}</script></head><body><div class=burger__container><div class=burger aria-controls=navigation aria-label=Menu><div class="burger__meat burger__meat--1"></div><div class="burger__meat burger__meat--2"></div><div class="burger__meat burger__meat--3"></div></div></div><nav class=nav id=navigation><ul class=nav__list><li><a href=/>about</a></li><li><a class=active href=/blog>blog</a></li></ul></nav><main><div class=flex-wrapper><div class=post__container><div class=post><header class=post__header><h1 id=post__title>Apollo 1337</h1><time datetime="2021-05-20 23:04:11 +0530 +0530" class=post__date>May 20 2021</time></header><article class=post__content><h2 id=problem-statement>Problem Statement<a class=anchor href=#problem-statement>#</a></h2><p><img src=/pictures/apollo-1337/challenge.png alt="challenge picture"></p><h2 id=tldr>TLDR<a class=anchor href=#tldr>#</a></h2><p>The problem statement first says that we have to launch the rocket with the help of the API. By inspecting the network tab in the chrome dev tools during the initial page load, we see that a get request is made to <code>/api/status?verbose=</code>. On accessing that page with the <code>verbose</code> parameter set to true, it gives us a list of api endpoints, one of which was <code>/api/rocketLaunch/</code>. On sending a POST request to that route with the required parameters, it asks us for a &ldquo;frontend authorization token&rdquo; for which we have to dig into the website source code. After finding the token and providing it along with the other parameters, it gives us the flag.</p><h2 id=solving-the-challenge-itself>Solving the challenge itself<a class=anchor href=#solving-the-challenge-itself>#</a></h2><p>On examining the requests made during the initial page load, we find a request being made to the API route <code>/api/status?verbose=</code>.</p><p><img src=/pictures/apollo-1337/req.png alt="the api request"></p><p>On navigating to <code>/api/status?verbose=true</code>, it gives us a list of API endpoints.</p><p><img src=/pictures/apollo-1337/endpoints.png alt=endpoints></p><p>The <code>/rocketLaunch</code> endpoint looks interesting, lets check it out. On navigating to the route in the browser, we are told that the &ldquo;request body must be json&rdquo;. Looks like we have to make a POST request. For this, I prefer using something like <a href=https://insomnia.rest target=_blank rel="noreferrer noopener">Insomnia</a>
-over cURL as I like the interface better, and its also better suited for beginners like myself, but you may use whatever you like.</p><p>We could probably guess a parameter and pass it into the body of the POST request. A reasonable parameter would be <code>"rocket"</code> to specify which rocket to launch, and the value could be <code>"apollo"</code>. Lets give that a try.</p><p><img src=/pictures/apollo-1337/trial1.png alt=trial1></p><p>Hmm, looks like that didnt work. But the response was very useful, as now we know that we have the right parameter name <code>"rocket"</code>, but the value was wrong. That can easily be changed.</p><p><img src=/pictures/apollo-1337/trial2.png alt=trial2></p><p>Looks like we need to specify a <code>"launchTime"</code>. From the problem statement, we know that the rocket needs to be launched at noon. So lets try that.</p><p><img src=/pictures/apollo-1337/trial3.png alt=trial3></p><p>Now lets add the pumpID parameter.</p><p><img src=/pictures/apollo-1337/trial4.png alt=trial4></p><p>The fuel pump with the ID 1 doesn&rsquo;t seem to work. But the response did mention something about <code>/fuel/1</code>. So maybe we could try going to <code>/api/fuel/2</code> etc in the browser to find one that fits? On doing that, we find that a valid <code>"pumpID"</code> is 4. On plugging in the value 4&mldr;..</p><p><img src=/pictures/apollo-1337/trial5.png alt=trial5></p><p><code>"frontend authorization token not specified"</code>?????? What is the frontend authorization token?????? This had me scratching my head for quite a while, but eventually I got it. I started to look at the request initiator, and found that the first file in the call stack looked like some sort of source code. Lets take a look at that file.</p><p><img src=/pictures/apollo-1337/initiator.png alt=initiator>
-<img src=/pictures/apollo-1337/token.png alt=token></p><p>Now that we have the token, lets try incorporating that into our request.</p><p><img src=/pictures/apollo-1337/trial6.png alt=trial6></p><p>Huh? The same response again? But didn&rsquo;t the source code mention <code>Token: "yiLYDykacWp9sgPMluQeKkANeRFXyU3ZuxBrj2BQ"</code>. Yeah, I was thinking for a while on this. But its actually a pretty simple solution, don&rsquo;t worry.</p><p><img src=/pictures/apollo-1337/solution.png alt=solution></p><p>Do you see the difference? Turns out that it was supposed to be <code>"token"</code> and not <code>"Token"</code>. Making the simple change gives us the flag. Nice and easy.</p><p>The final cURL request you can plug into your terminal to get the flag:</p><pre><code class=language-bash>curl --request POST \
+<!doctype html><html lang=en-us>
+<head>
+<title>Apollo 1337 | Anand Rajaram | Blog</title>
+<meta charset=utf-8>
+<meta name=language content="en">
+<meta name=description content>
+<meta name=keywords content>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<link rel="shortcut icon" type=image/png href=/favicon.ico>
+<link type=text/css rel=stylesheet href=/css/post.min.86d1effd4c412b85ac13db53a90c473a0f256f789b821e131125c9aa25cb6a6d.css integrity="sha256-htHv/UxBK4WsE9tTqQxHOg8lb3ibgh4TESXJqiXLam0=">
+<link type=text/css rel=stylesheet href=/css/custom.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.css integrity="sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=">
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/anandrajaram21.github.io\/"},"articleSection":"blog","name":"Apollo 1337","headline":"Apollo 1337","description":"","inLanguage":"en-US","author":"","creator":"","publisher":"","accountablePerson":"","copyrightHolder":"","copyrightYear":"2021","datePublished":"2021-05-20 23:04:11 \u002b0530 \u002b0530","dateModified":"2021-05-20 23:04:11 \u002b0530 \u002b0530","url":"https:\/\/anandrajaram21.github.io\/blog\/apollo-1337\/","wordCount":"628","keywords":["Blog"]}</script>
+</head>
+<body>
+<div class=burger__container>
+<div class=burger aria-controls=navigation aria-label=Menu>
+<div class="burger__meat burger__meat--1"></div>
+<div class="burger__meat burger__meat--2"></div>
+<div class="burger__meat burger__meat--3"></div>
+</div>
+</div>
+<nav class=nav id=navigation>
+<ul class=nav__list>
+<li>
+<a href=/>about</a>
+</li>
+<li>
+<a class=active href=/blog>blog</a>
+</li>
+</ul>
+</nav>
+<main>
+<div class=flex-wrapper>
+<div class=post__container>
+<div class=post>
+<header class=post__header>
+<h1 id=post__title>Apollo 1337</h1>
+<time datetime="2021-05-20 23:04:11 +0530 +0530" class=post__date>May 20 2021</time>
+</header>
+<article class=post__content>
+<h2 id=problem-statement>Problem Statement<a class=anchor href=#problem-statement>#</a></h2>
+<p><img src=/pictures/apollo-1337/challenge.png alt="challenge picture"></p>
+<h2 id=tldr>TLDR<a class=anchor href=#tldr>#</a></h2>
+<p>The problem statement first says that we have to launch the rocket with the help of the API. By inspecting the network tab in the chrome dev tools during the initial page load, we see that a get request is made to <code>/api/status?verbose=</code>. On accessing that page with the <code>verbose</code> parameter set to true, it gives us a list of api endpoints, one of which was <code>/api/rocketLaunch/</code>. On sending a POST request to that route with the required parameters, it asks us for a &ldquo;frontend authorization token&rdquo; for which we have to dig into the website source code. After finding the token and providing it along with the other parameters, it gives us the flag.</p>
+<h2 id=solving-the-challenge-itself>Solving the challenge itself<a class=anchor href=#solving-the-challenge-itself>#</a></h2>
+<p>On examining the requests made during the initial page load, we find a request being made to the API route <code>/api/status?verbose=</code>.</p>
+<p><img src=/pictures/apollo-1337/req.png alt="the api request"></p>
+<p>On navigating to <code>/api/status?verbose=true</code>, it gives us a list of API endpoints.</p>
+<p><img src=/pictures/apollo-1337/endpoints.png alt=endpoints></p>
+<p>The <code>/rocketLaunch</code> endpoint looks interesting, lets check it out. On navigating to the route in the browser, we are told that the &ldquo;request body must be json&rdquo;. Looks like we have to make a POST request. For this, I prefer using something like <a href=https://insomnia.rest target=_blank rel="noreferrer noopener">Insomnia</a>
+over cURL as I like the interface better, and its also better suited for beginners like myself, but you may use whatever you like.</p>
+<p>We could probably guess a parameter and pass it into the body of the POST request. A reasonable parameter would be <code>"rocket"</code> to specify which rocket to launch, and the value could be <code>"apollo"</code>. Lets give that a try.</p>
+<p><img src=/pictures/apollo-1337/trial1.png alt=trial1></p>
+<p>Hmm, looks like that didnt work. But the response was very useful, as now we know that we have the right parameter name <code>"rocket"</code>, but the value was wrong. That can easily be changed.</p>
+<p><img src=/pictures/apollo-1337/trial2.png alt=trial2></p>
+<p>Looks like we need to specify a <code>"launchTime"</code>. From the problem statement, we know that the rocket needs to be launched at noon. So lets try that.</p>
+<p><img src=/pictures/apollo-1337/trial3.png alt=trial3></p>
+<p>Now lets add the pumpID parameter.</p>
+<p><img src=/pictures/apollo-1337/trial4.png alt=trial4></p>
+<p>The fuel pump with the ID 1 doesn&rsquo;t seem to work. But the response did mention something about <code>/fuel/1</code>. So maybe we could try going to <code>/api/fuel/2</code> etc in the browser to find one that fits? On doing that, we find that a valid <code>"pumpID"</code> is 4. On plugging in the value 4&mldr;..</p>
+<p><img src=/pictures/apollo-1337/trial5.png alt=trial5></p>
+<p><code>"frontend authorization token not specified"</code>?????? What is the frontend authorization token?????? This had me scratching my head for quite a while, but eventually I got it. I started to look at the request initiator, and found that the first file in the call stack looked like some sort of source code. Lets take a look at that file.</p>
+<p><img src=/pictures/apollo-1337/initiator.png alt=initiator>
+<img src=/pictures/apollo-1337/token.png alt=token></p>
+<p>Now that we have the token, lets try incorporating that into our request.</p>
+<p><img src=/pictures/apollo-1337/trial6.png alt=trial6></p>
+<p>Huh? The same response again? But didn&rsquo;t the source code mention <code>Token: "yiLYDykacWp9sgPMluQeKkANeRFXyU3ZuxBrj2BQ"</code>. Yeah, I was thinking for a while on this. But its actually a pretty simple solution, don&rsquo;t worry.</p>
+<p><img src=/pictures/apollo-1337/solution.png alt=solution></p>
+<p>Do you see the difference? Turns out that it was supposed to be <code>"token"</code> and not <code>"Token"</code>. Making the simple change gives us the flag. Nice and easy.</p>
+<p>The final cURL request you can plug into your terminal to get the flag:</p>
+<pre><code class=language-bash>curl --request POST \
   --url https://space.sdc.tf/api/rocketLaunch \
   --header 'Content-Type: application/json' \
   --cookie __cfduid=d1c1486abdfe9252be96dea17b5e2282a1620531956 \
@@ -10,5 +80,36 @@ over cURL as I like the interface better, and its also better suited for beginne
 	&quot;pumpID&quot;: 4,
 	&quot;token&quot;: &quot;yiLYDykacWp9sgPMluQeKkANeRFXyU3ZuxBrj2BQ&quot;
 }'
-</code></pre><h2 id=thoughts>Thoughts<a class=anchor href=#thoughts>#</a></h2><p>I think this challenge was a lot harder than the git-good challenge. The git-good challenge only involved you finding the <code>/.git/</code> directory, after which everything was really simple, while this challenge involved a lot digging for clues, even after finding the right route to post to. Experienced CTF players may find this challenge easy, but for a beginner like me, I found this &ldquo;Easy&rdquo; challenge harder than the &ldquo;Medium&rdquo; git-good challenge. Overall, a pretty fun challenge.</p></article><div class=pagination><a class=pagination__item href=https://anandrajaram21.github.io/blog/git-good/><span class=pagination__label>Previous Post</span>
-<span class=pagination__title>Git Good</span></a></div><footer class=post__footer><div class=social-icons><a class=social-icons__link rel=me title=GitHub href=https://github.com/anandrajaram21 target=_blank rel=noopener><div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/github.svg)></div></a><a class=social-icons__link rel=me title=LinkedIn href=https://linkedin.com/in/anandrajaram21 target=_blank rel=noopener><div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/linkedin.svg)></div></a><a class=social-icons__link rel=me title=Email href=mailto:anandrajaram21@gmail.com target=_blank rel=noopener><div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/email.svg)></div></a></div><p>© 2021</p></footer></div></div></div></main><script src=/js/index.min.575dda8d49ee02639942c63564273e6da972ab531dda26a08800bdcb477cbd7f.js integrity="sha256-V13ajUnuAmOZQsY1ZCc+balyq1Md2iagiAC9y0d8vX8=" crossorigin=anonymous></script><script src=https://unpkg.com/prismjs@1.20.0/components/prism-core.min.js></script><script src=https://unpkg.com/prismjs@1.20.0/plugins/autoloader/prism-autoloader.min.js data-autoloader-path=https://unpkg.com/prismjs@1.20.0/components/></script></body></html>
+</code></pre>
+<h2 id=thoughts>Thoughts<a class=anchor href=#thoughts>#</a></h2>
+<p>I think this challenge was a lot harder than the git-good challenge. The git-good challenge only involved you finding the <code>/.git/</code> directory, after which everything was really simple, while this challenge involved a lot digging for clues, even after finding the right route to post to. Experienced CTF players may find this challenge easy, but for a beginner like me, I found this &ldquo;Easy&rdquo; challenge harder than the &ldquo;Medium&rdquo; git-good challenge. Overall, a pretty fun challenge.</p>
+</article>
+<div class=pagination>
+<a class=pagination__item href=https://anandrajaram21.github.io/blog/git-good/>
+<span class=pagination__label>Previous Post</span>
+<span class=pagination__title>Git Good</span>
+</a>
+</div>
+<footer class=post__footer>
+<div class=social-icons>
+<a class=social-icons__link rel=me title=GitHub href=https://github.com/anandrajaram21 target=_blank rel=noopener>
+<div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/github.svg)></div>
+</a>
+<a class=social-icons__link rel=me title=LinkedIn href=https://linkedin.com/in/anandrajaram21 target=_blank rel=noopener>
+<div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/linkedin.svg)></div>
+</a>
+<a class=social-icons__link rel=me title=Email href=mailto:git@anandrajaram.dev target=_blank rel=noopener>
+<div class=social-icons__icon style=background-image:url(https://anandrajaram21.github.io/svg/email.svg)></div>
+</a>
+</div>
+<p>© 2021</p>
+</footer>
+</div>
+</div>
+</div>
+</main>
+<script src=/js/index.min.575dda8d49ee02639942c63564273e6da972ab531dda26a08800bdcb477cbd7f.js integrity="sha256-V13ajUnuAmOZQsY1ZCc+balyq1Md2iagiAC9y0d8vX8=" crossorigin=anonymous></script>
+<script src=https://unpkg.com/prismjs@1.20.0/components/prism-core.min.js></script>
+<script src=https://unpkg.com/prismjs@1.20.0/plugins/autoloader/prism-autoloader.min.js data-autoloader-path=https://unpkg.com/prismjs@1.20.0/components/></script>
+</body>
+</html>
